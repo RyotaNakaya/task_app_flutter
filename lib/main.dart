@@ -23,11 +23,17 @@ class MyTodoApp extends StatelessWidget {
 }
 
 class TodoListPage extends StatefulWidget {
+  TodoListPage(this.user);
+  final User user;
+
   @override
-  _TodoListPageState createState() => _TodoListPageState();
+  _TodoListPageState createState() => _TodoListPageState(user);
 }
 
 class _TodoListPageState extends State<TodoListPage> {
+  _TodoListPageState(this.user);
+  final User user;
+
   List<String> todoList = [];
 
   @override
@@ -36,15 +42,22 @@ class _TodoListPageState extends State<TodoListPage> {
         appBar: AppBar(
           title: Text("リスト一覧"),
         ),
-        body: ListView.builder(
-          itemCount: todoList.length,
-          itemBuilder: (context, index) {
-            return Card(
-              child: ListTile(
-                title: Text(todoList[index]),
+        body: Column(
+          children: <Widget>[
+            Text('${user.email}'),
+            Expanded(
+              child: ListView.builder(
+                itemCount: todoList.length,
+                itemBuilder: (context, index) {
+                  return Card(
+                    child: ListTile(
+                      title: Text(todoList[index]),
+                    ),
+                  );
+                },
               ),
-            );
-          },
+            ),
+          ],
         ),
         floatingActionButton: FloatingActionButton(
           onPressed: () async {
@@ -178,7 +191,7 @@ class _LoginPageState extends State<LoginPage> {
                     try {
                       // メール/パスワードでユーザー登録
                       final FirebaseAuth auth = FirebaseAuth.instance;
-                      await auth.createUserWithEmailAndPassword(
+                      final result = await auth.createUserWithEmailAndPassword(
                         email: email,
                         password: password,
                       );
@@ -186,7 +199,7 @@ class _LoginPageState extends State<LoginPage> {
                       // 画面遷移＋ログイン画面を破棄
                       await Navigator.of(context).pushReplacement(
                         MaterialPageRoute(builder: (context) {
-                          return TodoListPage();
+                          return TodoListPage(result.user!);
                         }),
                       );
                     } catch (e) {
@@ -197,7 +210,37 @@ class _LoginPageState extends State<LoginPage> {
                     }
                   },
                 ),
-              )
+              ),
+              const SizedBox(height: 8),
+              Container(
+                width: double.infinity,
+                // ログイン登録ボタン
+                child: OutlinedButton(
+                  child: Text('ログイン'),
+                  onPressed: () async {
+                    try {
+                      // メール/パスワードでログイン
+                      final FirebaseAuth auth = FirebaseAuth.instance;
+                      final result = await auth.signInWithEmailAndPassword(
+                        email: email,
+                        password: password,
+                      );
+                      // ログインに成功した場合
+                      // チャット画面に遷移＋ログイン画面を破棄
+                      await Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(builder: (context) {
+                          return TodoListPage(result.user!);
+                        }),
+                      );
+                    } catch (e) {
+                      // ログインに失敗した場合
+                      setState(() {
+                        infoText = "ログインに失敗しました：${e.toString()}";
+                      });
+                    }
+                  },
+                ),
+              ),
             ],
           ),
         ),
