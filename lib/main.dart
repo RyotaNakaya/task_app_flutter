@@ -44,7 +44,24 @@ class _TodoListPageState extends State<TodoListPage> {
         ),
         body: Column(
           children: <Widget>[
-            Text('${user.email}'),
+            Row(
+              children: <Widget>[
+                Text('${user.email}'),
+                IconButton(
+                  icon: Icon(Icons.logout),
+                  onPressed: () async {
+                    // ログアウト処理
+                    await FirebaseAuth.instance.signOut();
+                    // ログイン画面に遷移＋画面を破棄
+                    await Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(builder: (context) {
+                        return LoginPage();
+                      }),
+                    );
+                  },
+                ),
+              ],
+            ),
             Expanded(
               child: ListView.builder(
                 itemCount: todoList.length,
