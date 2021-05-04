@@ -41,27 +41,25 @@ class _TodoListPageState extends State<TodoListPage> {
     return Scaffold(
         appBar: AppBar(
           title: Text("リスト一覧"),
+          actions: <Widget>[
+            IconButton(
+              icon: Icon(Icons.logout),
+              onPressed: () async {
+                // ログアウト処理
+                await FirebaseAuth.instance.signOut();
+                // ログイン画面に遷移＋画面を破棄
+                await Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (context) {
+                    return LoginPage();
+                  }),
+                );
+              },
+            ),
+          ],
         ),
         body: Column(
           children: <Widget>[
-            Row(
-              children: <Widget>[
-                Text('${user.email}'),
-                IconButton(
-                  icon: Icon(Icons.logout),
-                  onPressed: () async {
-                    // ログアウト処理
-                    await FirebaseAuth.instance.signOut();
-                    // ログイン画面に遷移＋画面を破棄
-                    await Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (context) {
-                        return LoginPage();
-                      }),
-                    );
-                  },
-                ),
-              ],
-            ),
+            Text('${user.email}'),
             Expanded(
               child: ListView.builder(
                 itemCount: todoList.length,
