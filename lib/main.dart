@@ -62,13 +62,31 @@ class _TodoListPageState extends State<TodoListPage> {
           children: <Widget>[
             Text('${user.email}'),
             Expanded(
-              child: ListView.builder(
-                itemCount: todoList.length,
-                itemBuilder: (context, index) {
-                  return Card(
-                    child: ListTile(
-                      title: Text(todoList[index]),
-                    ),
+              child: FutureBuilder<QuerySnapshot>(
+                future: FirebaseFirestore.instance
+                    .collection('posts')
+                    .orderBy('date')
+                    .get(),
+                builder: (context, snapshot) {
+                  // データが取得できた場合
+                  if (snapshot.hasData) {
+                    final List<DocumentSnapshot> documents =
+                        snapshot.data!.docs;
+                    // 取得した投稿メッセージ一覧を元にリスト表示
+                    return ListView(
+                      children: documents.map((document) {
+                        return Card(
+                          child: ListTile(
+                            title: Text(document['text']),
+                            subtitle: Text(document['email']),
+                          ),
+                        );
+                      }).toList(),
+                    );
+                  }
+                  // データが読込中の場合
+                  return Center(
+                    child: Text('読込中...'),
                   );
                 },
               ),
