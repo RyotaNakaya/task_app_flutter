@@ -79,6 +79,18 @@ class _TodoListPageState extends State<TodoListPage> {
                           child: ListTile(
                             title: Text(document['text']),
                             subtitle: Text(document['email']),
+                            trailing: document['email'] == user.email
+                                ? IconButton(
+                                    icon: Icon(Icons.delete),
+                                    onPressed: () async {
+                                      // 投稿メッセージのドキュメントを削除
+                                      await FirebaseFirestore.instance
+                                          .collection('posts')
+                                          .doc(document.id)
+                                          .delete();
+                                    },
+                                  )
+                                : null,
                           ),
                         );
                       }).toList(),
