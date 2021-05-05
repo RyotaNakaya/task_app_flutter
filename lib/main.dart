@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 Future<void> main() async {
@@ -78,7 +79,7 @@ class _TodoListPageState extends State<TodoListPage> {
           onPressed: () async {
             final newLineText = await Navigator.of(context)
                 .push(MaterialPageRoute(builder: (context) {
-              return TodoAddPage();
+              return TodoAddPage(user);
             }));
             if (newLineText != null) {
               setState(() {
@@ -92,6 +93,9 @@ class _TodoListPageState extends State<TodoListPage> {
 }
 
 class TodoAddPage extends StatefulWidget {
+  TodoAddPage(this.user);
+  final User user;
+
   @override
   _TodoAddPageState createState() => _TodoAddPageState();
 }
@@ -128,8 +132,17 @@ class _TodoAddPageState extends State<TodoAddPage> {
                 style: ElevatedButton.styleFrom(
                   primary: Colors.blue,
                 ),
-                onPressed: () {
-                  Navigator.of(context).pop(_text);
+                onPressed: () async {
+                  final date =
+                      DateTime.now().toLocal().toIso8601String(); // 現在の日時
+                  final email = widget.user.email; // AddPostPage のデータを参照
+                  // 投稿メッセージ用ドキュメント作成
+                  await FirebaseFirestore.instance
+                      .collection('posts') // コレクションID指定
+                      .doc() // ドキュメントID自動生成
+                      .set({'text': _text, 'email': email, 'date': date});
+                  // 1つ前の画面に戻る
+                  Navigator.of(context).pop();
                 },
                 child: Text("リスト追加", style: TextStyle(color: Colors.white)),
               ),
