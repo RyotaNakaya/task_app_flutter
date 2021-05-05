@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
 
 Future<void> main() async {
@@ -10,33 +11,42 @@ Future<void> main() async {
 }
 
 class MyTodoApp extends StatelessWidget {
+  final UserState userState = UserState();
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'My Todo App',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
+    return ChangeNotifierProvider<UserState>(
+      create: (context) => UserState(),
+      child: MaterialApp(
+        title: 'My Todo App',
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+        ),
+        home: LoginPage(),
       ),
-      home: LoginPage(),
     );
   }
 }
 
-class TodoListPage extends StatefulWidget {
-  TodoListPage(this.user);
-  final User user;
+class UserState extends ChangeNotifier {
+  User? user;
 
+  void setUser(User newUser) {
+    user = newUser;
+    notifyListeners();
+  }
+}
+
+class TodoListPage extends StatefulWidget {
   @override
-  _TodoListPageState createState() => _TodoListPageState(user);
+  _TodoListPageState createState() => _TodoListPageState();
 }
 
 class _TodoListPageState extends State<TodoListPage> {
-  _TodoListPageState(this.user);
-  final User user;
-
   @override
   Widget build(BuildContext context) {
+    final UserState userState = Provider.of<UserState>(context);
+    final User user = userState.user!;
     return Scaffold(
         appBar: AppBar(
           title: Text("リスト一覧"),
@@ -107,7 +117,7 @@ class _TodoListPageState extends State<TodoListPage> {
           onPressed: () async {
             await Navigator.of(context)
                 .push(MaterialPageRoute(builder: (context) {
-              return TodoAddPage(user);
+              return TodoAddPage();
             }));
           },
           child: Icon(Icons.add),
@@ -116,9 +126,6 @@ class _TodoListPageState extends State<TodoListPage> {
 }
 
 class TodoAddPage extends StatefulWidget {
-  TodoAddPage(this.user);
-  final User user;
-
   @override
   _TodoAddPageState createState() => _TodoAddPageState();
 }
@@ -127,6 +134,8 @@ class _TodoAddPageState extends State<TodoAddPage> {
   String _text = "";
 
   Widget build(BuildContext context) {
+    final UserState userState = Provider.of<UserState>(context);
+    final User user = userState.user!;
     return Scaffold(
       appBar: AppBar(
         title: Text("リスト追加"),
@@ -158,7 +167,7 @@ class _TodoAddPageState extends State<TodoAddPage> {
                 onPressed: () async {
                   final date =
                       DateTime.now().toLocal().toIso8601String(); // 現在の日時
-                  final email = widget.user.email; // AddPostPage のデータを参照
+                  final email = user.email; // AddPostPage のデータを参照
                   // 投稿メッセージ用ドキュメント作成
                   await FirebaseFirestore.instance
                       .collection('posts') // コレクションID指定
@@ -202,6 +211,7 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final UserState userState = Provider.of<UserState>(context);
     return Scaffold(
       body: Center(
         child: Container(
@@ -235,38 +245,8 @@ class _LoginPageState extends State<LoginPage> {
               ),
               Container(
                 width: double.infinity,
-                // ユーザー登録ボタン
-                child: ElevatedButton(
-                  child: Text('ユーザー登録'),
-                  onPressed: () async {
-                    try {
-                      // メール/パスワードでユーザー登録
-                      final FirebaseAuth auth = FirebaseAuth.instance;
-                      final result = await auth.createUserWithEmailAndPassword(
-                        email: email,
-                        password: password,
-                      );
-                      // ユーザー登録に成功した場合
-                      // 画面遷移＋ログイン画面を破棄
-                      await Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(builder: (context) {
-                          return TodoListPage(result.user!);
-                        }),
-                      );
-                    } catch (e) {
-                      // ユーザー登録に失敗した場合
-                      setState(() {
-                        infoText = "登録に失敗しました：${e.toString()}";
-                      });
-                    }
-                  },
-                ),
-              ),
-              const SizedBox(height: 8),
-              Container(
-                width: double.infinity,
                 // ログイン登録ボタン
-                child: OutlinedButton(
+                child: ElevatedButton(
                   child: Text('ログイン'),
                   onPressed: () async {
                     try {
@@ -276,17 +256,49 @@ class _LoginPageState extends State<LoginPage> {
                         email: email,
                         password: password,
                       );
+                      userState.setUser(result.user!);
                       // ログインに成功した場合
                       // チャット画面に遷移＋ログイン画面を破棄
                       await Navigator.of(context).pushReplacement(
                         MaterialPageRoute(builder: (context) {
-                          return TodoListPage(result.user!);
+                          return TodoListPage();
                         }),
                       );
                     } catch (e) {
                       // ログインに失敗した場合
                       setState(() {
                         infoText = "ログインに失敗しました：${e.toString()}";
+                      });
+                    }
+                  },
+                ),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                width: double.infinity,
+                // ユーザー登録ボタン
+                child: OutlinedButton(
+                  child: Text('ユーザー登録'),
+                  onPressed: () async {
+                    try {
+                      // メール/パスワードでユーザー登録
+                      final FirebaseAuth auth = FirebaseAuth.instance;
+                      final result = await auth.createUserWithEmailAndPassword(
+                        email: email,
+                        password: password,
+                      );
+                      userState.setUser(result.user!);
+                      // ユーザー登録に成功した場合
+                      // 画面遷移＋ログイン画面を破棄
+                      await Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(builder: (context) {
+                          return TodoListPage();
+                        }),
+                      );
+                    } catch (e) {
+                      // ユーザー登録に失敗した場合
+                      setState(() {
+                        infoText = "登録に失敗しました：${e.toString()}";
                       });
                     }
                   },
