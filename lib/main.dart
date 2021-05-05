@@ -60,11 +60,11 @@ class _TodoListPageState extends State<TodoListPage> {
           children: <Widget>[
             Text('${user.email}'),
             Expanded(
-              child: FutureBuilder<QuerySnapshot>(
-                future: FirebaseFirestore.instance
+              child: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
                     .collection('posts')
                     .orderBy('date')
-                    .get(),
+                    .snapshots(),
                 builder: (context, snapshot) {
                   // データが取得できた場合
                   if (snapshot.hasData) {
