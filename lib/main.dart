@@ -35,8 +35,6 @@ class _TodoListPageState extends State<TodoListPage> {
   _TodoListPageState(this.user);
   final User user;
 
-  List<String> todoList = [];
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -107,15 +105,10 @@ class _TodoListPageState extends State<TodoListPage> {
         ),
         floatingActionButton: FloatingActionButton(
           onPressed: () async {
-            final newLineText = await Navigator.of(context)
+            await Navigator.of(context)
                 .push(MaterialPageRoute(builder: (context) {
               return TodoAddPage(user);
             }));
-            if (newLineText != null) {
-              setState(() {
-                todoList.add(newLineText);
-              });
-            }
           },
           child: Icon(Icons.add),
         ));
